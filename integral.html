@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Integral Definida</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <span class="site-header__brand">Resolvedor de Sistemas</span>
+    <nav class="site-header__nav">
+      <a href="index.html">Sistemas de ecuaciones</a>
+      <a href="integral.html" aria-current="page">Integral definida</a>
+    </nav>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar entre modo oscuro y claro">☀️</button>
+  </header>
+
+  <main>
+    <h1>Integral definida</h1>
+    <p class="page-intro">
+      Calcula ∫ₐᵇ f(t) dt numéricamente (cuadratura de Simpson adaptativa),
+      con soporte para números complejos y variables con nombre propio.
+    </p>
+
+    <!-- 1. Variables conocidas -->
+    <section class="card">
+      <h2>1 · Variables definidas</h2>
+      <p class="section-help">
+        Una definición por fila. Forma explícita: <code>a=12</code>. Forma implícita:
+        <code>3*b=\ln(3/2)</code> (se despeja automáticamente la variable nueva). Cada
+        fila puede usar las variables definidas en filas anteriores.
+      </p>
+      <div id="knowns-list" class="row-list"></div>
+      <button type="button" class="btn-add" id="add-known">+ Agregar variable</button>
+    </section>
+
+    <!-- 2. Integral -->
+    <section class="card">
+      <h2>2 · Integral</h2>
+      <p class="section-help">
+        Escribe la función con la misma sintaxis que en el resolvedor de sistemas:
+        <code>*</code> <code>/</code> <code>-</code> <code>+</code> <code>^</code>,
+        multiplicación implícita <code>valor(expr)</code> / <code>(expr)(expr)</code>,
+        funciones <code>\ln</code>, <code>\log_10</code>, <code>\sqrt</code>,
+        <code>\exp</code>, trigonométricas (<code>\sin \cos \tan \cot \sec \csc</code>
+        y sus inversas <code>\asin</code>...), hiperbólicas (<code>\sinh \cosh \tanh</code>
+        ... y sus inversas), constante <code>\pi</code>, y <code>j</code>/<code>e</code>
+        reservados. Los límites deben evaluar a un número real.
+      </p>
+
+      <div class="integral-row">
+        <div class="integral-symbol">
+  <input type="text" id="upper-bound" class="bound-input" placeholder="π" />
+          <span class="integral-sign" aria-hidden="true">∫</span>
+          <input type="text" id="lower-bound" class="bound-input" placeholder="0" />
+        </div>
+        <div class="integral-body">
+          <input type="text" id="expression" placeholder="\sin(x)" autocomplete="off" spellcheck="false" />
+          <span class="integral-dvar">
+            d<input type="text" id="var-name" class="var-input" placeholder="x" autocomplete="off" spellcheck="false" />
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <div class="solve-bar">
+      <button type="button" id="solve-btn">Calcular integral</button>
+      <button type="button" id="pdf-btn" class="btn-secondary">⬇ Descargar PDF</button>
+    </div>
+
+    <div id="error-box"></div>
+
+    <section id="results" class="card">
+      <h2>Resultado</h2>
+      <div id="results-list"></div>
+      <p class="result-detail" id="result-detail"></p>
+    </section>
+  </main>
+
+  <!-- Reporte imprimible (oculto en pantalla, se llena al pulsar "Descargar PDF") -->
+  <div id="print-report"></div>
+
+  <footer class="site-footer">
+    <p>por josegonandez</p>
+  </footer>
+
+  <script src="js/complex.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/evaluator.js"></script>
+  <script src="js/linsolve.js"></script>
+  <script src="js/integral.js"></script>
+  <script src="js/app-integral.js"></script>
+</body>
+</html>
