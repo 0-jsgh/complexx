@@ -38,11 +38,43 @@
   });
 
   // ------------------------------------------------------------------
+  // Persistencia (localStorage): los datos sobreviven al cambiar de
+  // página o cerrar la pestaña, hasta que el usuario los borre.
+  // ------------------------------------------------------------------
+  const STORAGE_KEY = "linsolve-system-state-v1";
+
+  function saveState() {
+    const state = {
+      unknowns: getRowValues(unknownsList),
+      knowns: getRowValues(knownsList),
+      equations: getRowValues(equationsList),
+    };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      /* almacenamiento no disponible: los datos solo viven en esta sesión */
+    }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ------------------------------------------------------------------
   // Filas dinámicas
   // ------------------------------------------------------------------
   const unknownsList = document.getElementById("unknowns-list");
   const knownsList = document.getElementById("knowns-list");
   const equationsList = document.getElementById("equations-list");
+
+  function getRowValues(container) {
+    return [...container.querySelectorAll("input")].map((i) => i.value.trim());
+  }
 
   function makeRow({ placeholder, value, onRemove, monoLabel }) {
     const row = document.createElement("div");
@@ -73,8 +105,6 @@
       row.appendChild(removeBtn);
     }
 
-    row.querySelector("input").addEventListener("input", () => {}); // hook reservado
-
     return { row, input };
   }
 
@@ -85,6 +115,7 @@
       onRemove: (r) => {
         r.remove();
         syncEquationRows();
+        saveState();
       },
     });
     unknownsList.appendChild(row);
@@ -95,7 +126,10 @@
     const { row } = makeRow({
       placeholder: "a=12  ó  3*b=\\ln(3/2)",
       value,
-      onRemove: (r) => r.remove(),
+      onRemove: (r) => {
+        r.remove();
+        saveState();
+      },
     });
     knownsList.appendChild(row);
   }
@@ -115,17 +149,39 @@
     }
   }
 
-  document.getElementById("add-unknown").addEventListener("click", () => addUnknownRow(""));
-  document.getElementById("add-known").addEventListener("click", () => addKnownRow(""));
+  document.getElementById("add-unknown").addEventListener("click", () => {
+    addUnknownRow("");
+    saveState();
+  });
+  document.getElementById("add-known").addEventListener("click", () => {
+    addKnownRow("");
+    saveState();
+  });
 
-  // Filas iniciales de ejemplo.
-  addUnknownRow("x1");
-  addUnknownRow("x2");
-  addKnownRow("a=12");
-  addKnownRow("3*b=\\ln(3/2)");
-  const eqInputs = equationsList.querySelectorAll("input");
-  if (eqInputs[0]) eqInputs[0].value = "3*x1+a*x2=b";
-  if (eqInputs[1]) eqInputs[1].value = "x1-x2=1";
+  // Cualquier tecleo en las tres listas guarda el estado (delegación de eventos).
+  [unknownsList, knownsList, equationsList].forEach((list) => {
+    list.addEventListener("input", saveState);
+  });
+
+  // Restaura el estado guardado si existe; si no, precarga el ejemplo.
+  const saved = loadState();
+  if (saved && (saved.unknowns.length || saved.knowns.length || saved.equations.some((e) => e))) {
+    (saved.unknowns.length ? saved.unknowns : [""]).forEach((v) => addUnknownRow(v));
+    saved.knowns.forEach((v) => addKnownRow(v));
+    const eqInputs = equationsList.querySelectorAll("input");
+    saved.equations.forEach((v, i) => {
+      if (eqInputs[i]) eqInputs[i].value = v;
+    });
+  } else {
+    addUnknownRow("x1");
+    addUnknownRow("x2");
+    addKnownRow("a=12");
+    addKnownRow("3*b=\\ln(3/2)");
+    const eqInputs = equationsList.querySelectorAll("input");
+    if (eqInputs[0]) eqInputs[0].value = "3*x1+a*x2=b";
+    if (eqInputs[1]) eqInputs[1].value = "x1-x2=1";
+  }
+  saveState();
 
   // ------------------------------------------------------------------
   // Resolución
@@ -174,10 +230,6 @@
     }
 
     resultsSection.style.display = "block";
-  }
-
-  function getRowValues(container) {
-    return [...container.querySelectorAll("input")].map((i) => i.value.trim());
   }
 
   function solve() {
@@ -287,4 +339,20 @@
   });
 
   document.getElementById("solve-btn").addEventListener("click", solve);
+
+  document.getElementById("clear-btn").addEventListener("click", () => {
+    if (!confirm("¿Borrar todas las incógnitas, variables conocidas y ecuaciones?")) return;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      /* almacenamiento no disponible */
+    }
+    unknownsList.innerHTML = "";
+    knownsList.innerHTML = "";
+    equationsList.innerHTML = "";
+    addUnknownRow("");
+    clearError();
+    resultsSection.style.display = "none";
+    lastSolution = null;
+  });
 })();

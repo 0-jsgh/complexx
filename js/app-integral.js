@@ -37,6 +37,40 @@
   });
 
   // ------------------------------------------------------------------
+  // Persistencia (localStorage): los datos sobreviven al cambiar de
+  // página o cerrar la pestaña, hasta que el usuario los borre.
+  // ------------------------------------------------------------------
+  const STORAGE_KEY = "linsolve-integral-state-v1";
+
+  function getRowValues(container) {
+    return [...container.querySelectorAll("input")].map((i) => i.value.trim());
+  }
+
+  function saveState() {
+    const state = {
+      knowns: getRowValues(knownsList),
+      varName: document.getElementById("var-name").value,
+      lowerBound: document.getElementById("lower-bound").value,
+      upperBound: document.getElementById("upper-bound").value,
+      expression: document.getElementById("expression").value,
+    };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      /* almacenamiento no disponible: los datos solo viven en esta sesión */
+    }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ------------------------------------------------------------------
   // Filas dinámicas de variables conocidas
   // ------------------------------------------------------------------
   const knownsList = document.getElementById("knowns-list");
@@ -58,20 +92,42 @@
     removeBtn.className = "row-remove";
     removeBtn.setAttribute("aria-label", "Eliminar fila");
     removeBtn.textContent = "✕";
-    removeBtn.addEventListener("click", () => row.remove());
+    removeBtn.addEventListener("click", () => {
+      row.remove();
+      saveState();
+    });
     row.appendChild(removeBtn);
 
     knownsList.appendChild(row);
   }
 
-  document.getElementById("add-known").addEventListener("click", () => addKnownRow(""));
+  document.getElementById("add-known").addEventListener("click", () => {
+    addKnownRow("");
+    saveState();
+  });
 
-  // Fila inicial y ejemplo funcional precargado.
-  addKnownRow("a=1");
-  document.getElementById("lower-bound").value = "0";
-  document.getElementById("upper-bound").value = "\\pi";
-  document.getElementById("var-name").value = "x";
-  document.getElementById("expression").value = "\\sin(x)";
+  // Cualquier tecleo guarda el estado (delegación de eventos + campos sueltos).
+  knownsList.addEventListener("input", saveState);
+  ["var-name", "lower-bound", "upper-bound", "expression"].forEach((id) => {
+    document.getElementById(id).addEventListener("input", saveState);
+  });
+
+  // Restaura el estado guardado si existe; si no, precarga el ejemplo.
+  const saved = loadState();
+  if (saved && (saved.knowns.length || saved.varName || saved.lowerBound || saved.upperBound || saved.expression)) {
+    saved.knowns.forEach((v) => addKnownRow(v));
+    document.getElementById("var-name").value = saved.varName || "";
+    document.getElementById("lower-bound").value = saved.lowerBound || "";
+    document.getElementById("upper-bound").value = saved.upperBound || "";
+    document.getElementById("expression").value = saved.expression || "";
+  } else {
+    addKnownRow("a=1");
+    document.getElementById("lower-bound").value = "0";
+    document.getElementById("upper-bound").value = "\\pi";
+    document.getElementById("var-name").value = "x";
+    document.getElementById("expression").value = "\\sin(x)";
+  }
+  saveState();
 
   // ------------------------------------------------------------------
   // Cálculo
@@ -95,10 +151,6 @@
   function clearError() {
     errorBox.style.display = "none";
     errorBox.textContent = "";
-  }
-
-  function getRowValues(container) {
-    return [...container.querySelectorAll("input")].map((i) => i.value.trim());
   }
 
   /** Evalúa un texto de límite (real) usando solo variables conocidas + reservadas. */
@@ -240,4 +292,21 @@
   });
 
   document.getElementById("solve-btn").addEventListener("click", solve);
+
+  document.getElementById("clear-btn").addEventListener("click", () => {
+    if (!confirm("¿Borrar las variables definidas y los datos de la integral?")) return;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      /* almacenamiento no disponible */
+    }
+    knownsList.innerHTML = "";
+    document.getElementById("var-name").value = "";
+    document.getElementById("lower-bound").value = "";
+    document.getElementById("upper-bound").value = "";
+    document.getElementById("expression").value = "";
+    clearError();
+    resultsSection.style.display = "none";
+    lastResult = null;
+  });
 })();
