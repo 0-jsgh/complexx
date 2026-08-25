@@ -3,35 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Integral Definida</title>
+  <title>Integrales</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <header class="site-header">
-    <span class="site-header__brand">Resolvedor de Sistemas</span>
+    <span class="site-header__brand">Resolver</span>
     <nav class="site-header__nav">
-      <a href="index.html">Sistemas de ecuaciones</a>
-      <a href="integral.html" aria-current="page">Integral definida</a>
+      <a href="index.html">Sistemas Eq</a>
+      <a href="integral.html" aria-current="page">Integrales</a>
+      <a href="ayuda.html">Ayuda</a>
     </nav>
     <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar entre modo oscuro y claro">☀️</button>
   </header>
 
   <main>
-    <h1>Integral definida</h1>
-    <p class="page-intro">
-      Calcula ∫ₐᵇ f(t) dt numéricamente (cuadratura de Simpson adaptativa),
-      con soporte para números complejos y variables con nombre propio.
-    </p>
+    <h1>Integrales</h1>
 
     <!-- 1. Variables conocidas -->
     <section class="card">
       <h2>1 · Variables definidas</h2>
-      <p class="section-help">
-        Una definición por fila. Forma explícita: <code>a=12</code>. Forma implícita:
-        <code>3*b=\ln(3/2)</code> (se despeja automáticamente la variable nueva). Cada
-        fila puede usar las variables definidas en filas anteriores.
-      </p>
       <div id="knowns-list" class="row-list"></div>
       <button type="button" class="btn-add" id="add-known">+ Agregar variable</button>
     </section>
@@ -39,20 +31,10 @@
     <!-- 2. Integral -->
     <section class="card">
       <h2>2 · Integral</h2>
-      <p class="section-help">
-        Escribe la función con la misma sintaxis que en el resolvedor de sistemas:
-        <code>*</code> <code>/</code> <code>-</code> <code>+</code> <code>^</code>,
-        multiplicación implícita <code>valor(expr)</code> / <code>(expr)(expr)</code>,
-        funciones <code>\ln</code>, <code>\log_10</code>, <code>\sqrt</code>,
-        <code>\exp</code>, trigonométricas (<code>\sin \cos \tan \cot \sec \csc</code>
-        y sus inversas <code>\asin</code>...), hiperbólicas (<code>\sinh \cosh \tanh</code>
-        ... y sus inversas), constante <code>\pi</code>, y <code>j</code>/<code>e</code>
-        reservados. Los límites deben evaluar a un número real.
-      </p>
 
       <div class="integral-row">
         <div class="integral-symbol">
-  <input type="text" id="upper-bound" class="bound-input" placeholder="π" />
+          <input type="text" id="upper-bound" class="bound-input" placeholder="π" />
           <span class="integral-sign" aria-hidden="true">∫</span>
           <input type="text" id="lower-bound" class="bound-input" placeholder="0" />
         </div>
@@ -65,8 +47,15 @@
       </div>
     </section>
 
+    <!-- 3. Contexto -->
+    <section class="card">
+      <h2>3 · Contexto (opcional)</h2>
+      <textarea id="context-text" class="context-textarea" rows="4" placeholder="Describe el contexto o propósito de este cálculo. Se incluirá en el PDF."></textarea>
+    </section>
+
     <div class="solve-bar">
-      <button type="button" id="solve-btn">Calcular integral</button>
+      <button type="button" id="solve-btn">Resolver</button>
+      <input type="text" id="pdf-title" class="pdf-title-input" placeholder="Título del informe (para el PDF)" />
       <button type="button" id="pdf-btn" class="btn-secondary">⬇ Descargar PDF</button>
       <button type="button" id="clear-btn" class="btn-add">🗑 Limpiar todo</button>
     </div>
@@ -77,6 +66,16 @@
       <h2>Resultado</h2>
       <div id="results-list"></div>
       <p class="result-detail" id="result-detail"></p>
+    </section>
+
+    <!-- Historial de resultados -->
+    <section id="history-section" class="card">
+      <div class="card-header-row">
+        <h2>Historial de resultados</h2>
+        <button type="button" id="clear-history-btn" class="btn-add">🗑 Limpiar historial</button>
+      </div>
+      <div id="history-list"></div>
+      <p class="result-detail" id="history-empty">Aún no hay resultados calculados en esta sesión.</p>
     </section>
   </main>
 
@@ -92,6 +91,7 @@
   <script src="js/evaluator.js"></script>
   <script src="js/linsolve.js"></script>
   <script src="js/integral.js"></script>
+  <script src="js/highlight.js"></script>
   <script src="js/app-integral.js"></script>
 </body>
 </html>

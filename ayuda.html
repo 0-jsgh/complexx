@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ayuda</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <span class="site-header__brand">Resolver</span>
+    <nav class="site-header__nav">
+      <a href="index.html">Sistemas Eq</a>
+      <a href="integral.html">Integrales</a>
+      <a href="ayuda.html" aria-current="page">Ayuda</a>
+    </nav>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar entre modo oscuro y claro">☀️</button>
+  </header>
+
+  <main>
+    <h1>Ayuda</h1>
+
+    <nav class="doc-nav" aria-label="Secciones de esta página">
+      <a href="#que-es">Qué es esto</a>
+      <a href="#sintaxis">Sintaxis aceptada</a>
+      <a href="#variables-conocidas">Variables conocidas</a>
+      <a href="#sistema-ecuaciones">Sistema de ecuaciones</a>
+      <a href="#integral">Integral definida</a>
+      <a href="#contexto">Contexto</a>
+      <a href="#historial">Historial (integral)</a>
+      <a href="#pdf">Exportar a PDF</a>
+      <a href="#datos">Datos y persistencia</a>
+    </nav>
+
+    <section class="card doc-section" id="que-es">
+      <h2>Qué es esto</h2>
+      <p>Esta herramienta tiene dos calculadoras independientes, disponibles en el menú superior:</p>
+      <ul>
+        <li><strong>Sistemas Eq</strong>: resuelve sistemas de ecuaciones lineales (reales o complejas) con cualquier número de incógnitas.</li>
+        <li><strong>Integrales</strong>: calcula integrales definidas de una variable real, con resultado real o complejo.</li>
+      </ul>
+      <p>Ambas comparten el mismo lector de expresiones matemáticas (la misma sintaxis descrita abajo), el mismo sistema de variables conocidas, el mismo resaltado de color al escribir, y la misma exportación a PDF.</p>
+    </section>
+
+    <section class="card doc-section" id="sintaxis">
+      <h2>Sintaxis aceptada</h2>
+      <p>Todos los campos de fórmula (ecuaciones, variables conocidas, expresión a integrar, límites) se interpretan con el mismo lector. Acepta:</p>
+      <table class="doc-table">
+        <tr><th>Elemento</th><th>Ejemplos</th></tr>
+        <tr><td>Números</td><td><code>12</code>, <code>3.5</code>, <code>0.001</code></td></tr>
+        <tr><td>Operadores</td><td><code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>^</code> (potencia)</td></tr>
+        <tr><td>Paréntesis / llaves</td><td><code>(...)</code> y <code>{...}</code> — se pueden mezclar y anidar; se colorean por nivel de anidación</td></tr>
+        <tr><td>Multiplicación implícita</td><td><code>2\pi</code>, <code>3\sin(x)</code>, <code>2(x+1)</code> equivalen a <code>2*\pi</code>, <code>3*\sin(x)</code>, <code>2*(x+1)</code></td></tr>
+        <tr><td>Funciones</td><td><code>\sin</code> <code>\cos</code> <code>\tan</code> <code>\cot</code> <code>\sec</code> <code>\csc</code> y sus inversas <code>\asin</code>… e hiperbólicas <code>\sinh</code>, <code>\cosh</code>, etc. (e inversas <code>\asinh</code>…)</td></tr>
+        <tr><td>Otras funciones</td><td><code>\ln(...)</code>, <code>\sqrt(...)</code>, <code>\exp(...)</code>, <code>\log_10(...)</code> (la base va después del guion bajo)</td></tr>
+        <tr><td>Constantes</td><td><code>\pi</code> (π), <code>e</code> (número de Euler), <code>j</code> (unidad imaginaria)</td></tr>
+        <tr><td>Igualdad</td><td><code>=</code> — si una expresión no lleva <code>=</code>, se asume "<code>= 0</code>"</td></tr>
+      </table>
+      <p>Las funciones aceptan tanto la forma con paréntesis (<code>\sin(x)</code>) como la forma LaTeX con llaves (<code>\sin{x}</code>).</p>
+      <p>Los nombres de variable deben empezar por letra y solo contener letras y números (por ejemplo <code>x1</code>, <code>a</code>, <code>Vout</code>). No pueden usarse como nombre de variable las palabras reservadas: <code>e</code>, <code>j</code>, <code>pi</code>, <code>ln</code>, <code>log</code>, <code>sqrt</code>, <code>exp</code>, ni ningún nombre de función trigonométrica/hiperbólica (<code>sin</code>, <code>cos</code>, <code>asinh</code>, etc.).</p>
+      <p>Mientras se escribe, cada campo colorea en vivo los paréntesis por nivel, los comandos <code>\algo</code>, el signo <code>=</code> y los operadores — el mismo color se conserva al exportar a PDF.</p>
+    </section>
+
+    <section class="card doc-section" id="variables-conocidas">
+      <h2>Variables conocidas</h2>
+      <p>Es la sección donde se definen constantes o parámetros que luego se pueden usar dentro de las ecuaciones o de la integral. Cada fila define <strong>una sola variable nueva</strong>, de dos formas:</p>
+      <ul>
+        <li><strong>Explícita:</strong> <code>a=12</code> — define <code>a</code> directamente.</li>
+        <li><strong>Implícita:</strong> <code>3*b=\ln(3/2)</code> — se despeja <code>b</code> automáticamente (la herramienta detecta cuál es el único nombre nuevo en la fila y lo resuelve por sondeo, asumiendo que la fila es lineal en esa variable).</li>
+      </ul>
+      <p>Una variable conocida puede usar en su definición cualquier variable conocida ya definida en una fila anterior. No se permite definir la misma variable dos veces, ni dos variables nuevas en una misma fila.</p>
+    </section>
+
+    <section class="card doc-section" id="sistema-ecuaciones">
+      <h2>Sistema de ecuaciones</h2>
+      <ol>
+        <li><strong>Variables desconocidas:</strong> agrega tantas filas como incógnitas quieras resolver (por ejemplo <code>x1</code>, <code>x2</code>).</li>
+        <li><strong>Variables conocidas:</strong> opcional (ver sección anterior).</li>
+        <li><strong>Sistema de ecuaciones:</strong> se genera automáticamente una fila de ecuación por cada incógnita agregada. Cada ecuación debe ser <strong>lineal (afín)</strong> en las incógnitas — se permiten sumas, restas y multiplicación/división por constantes o variables conocidas, pero no productos entre incógnitas ni potencias de una incógnita distintas de 1.</li>
+      </ol>
+      <p><strong>Procedimiento:</strong> cada ecuación se evalúa numéricamente con las incógnitas puestas en 0 y en 1 (una por una) para extraer sus coeficientes sin derivar simbólicamente, comprobando en el proceso que la ecuación sea realmente lineal. Con esos coeficientes se arma el sistema A·x = b y se resuelve por <strong>eliminación gaussiana con pivoteo parcial</strong>, con soporte completo para números complejos. Si el sistema no tiene solución única (matriz singular), se informa el error.</p>
+    </section>
+
+    <section class="card doc-section" id="integral">
+      <h2>Integral definida</h2>
+      <ol>
+        <li><strong>Variables definidas:</strong> opcional, igual que en el sistema de ecuaciones.</li>
+        <li><strong>Límites:</strong> el límite inferior y superior deben ser expresiones que se evalúen a un número <strong>real</strong> (pueden usar variables conocidas y <code>\pi</code>, pero no la variable de integración).</li>
+        <li><strong>Variable de integración:</strong> el nombre que se está integrando (por ejemplo <code>x</code>). Debe ser distinto de cualquier variable conocida.</li>
+        <li><strong>Expresión:</strong> la función a integrar, f(variable). Puede tomar valores complejos (usando <code>j</code>), aunque la variable de integración y los límites son siempre reales.</li>
+      </ol>
+      <p><strong>Procedimiento:</strong> no hay integración simbólica. El cálculo se hace por <strong>cuadratura de Simpson adaptativa</strong> (método de Gander–Gautschi), integrando por separado la parte real y la parte imaginaria de la expresión y recomponiendo el resultado complejo al final.</p>
+    </section>
+
+    <section class="card doc-section" id="contexto">
+      <h2>Contexto</h2>
+      <p>Ambas calculadoras tienen un campo de texto libre llamado "Contexto", pensado para anotar el propósito o el trasfondo del cálculo (de dónde salió, para qué proyecto, qué representa cada variable, etc.). Es completamente opcional, se guarda junto con el resto de los datos y aparece al principio del reporte cuando exportas a PDF.</p>
+    </section>
+
+    <section class="card doc-section" id="historial">
+      <h2>Historial de resultados (solo en Integrales)</h2>
+      <p>Cada vez que se calcula una integral con éxito, se agrega una entrada al historial con la fecha y hora, los límites, la expresión integrada y el resultado. <strong>Las variables conocidas no se guardan en el historial</strong> — solo el planteamiento y el resultado de la integral en sí.</p>
+      <ul>
+        <li>Cada entrada tiene un campo de <strong>título</strong> editable, para identificarla más fácilmente.</li>
+        <li>El botón <strong>✕</strong> de cada entrada borra solo esa entrada.</li>
+        <li>El botón <strong>"Limpiar historial"</strong> borra todo el historial, sin tocar el resto de los datos.</li>
+        <li>El botón general <strong>"Limpiar todo"</strong> también borra el historial, además de las variables y los datos de la integral.</li>
+      </ul>
+      <p>El historial completo se incluye también en el PDF (ver siguiente sección).</p>
+    </section>
+
+    <section class="card doc-section" id="pdf">
+      <h2>Exportar a PDF</h2>
+      <p>El botón "Descargar PDF" primero recalcula con los datos actuales y luego abre el diálogo de impresión del navegador (elige "Guardar como PDF" como destino). Puedes escribir un título para el reporte en el campo junto al botón.</p>
+      <p>En <strong>Sistemas Eq</strong> el reporte incluye: contexto (si hay), variables desconocidas, variables conocidas resueltas, el sistema tal como se ingresó, y la solución final.</p>
+      <p>En <strong>Integrales</strong> el reporte incluye: contexto (si hay), variables definidas resueltas, y el historial completo de resultados (con título, fecha, planteamiento y resultado de cada integral calculada) — por eso el resultado más reciente ya aparece ahí, sin necesidad de una sección aparte.</p>
+      <p>Los colores de sintaxis de las expresiones se conservan en el PDF, igual que se ven en pantalla.</p>
+    </section>
+
+    <section class="card doc-section" id="datos">
+      <h2>Datos y persistencia</h2>
+      <p>Todo lo que escribes (incógnitas, variables, ecuaciones, datos de la integral, contexto e historial) se guarda automáticamente en el navegador (<code>localStorage</code>) y sigue ahí aunque cierres la pestaña o recargues la página. Nada se envía a ningún servidor. El botón "Limpiar todo" de cada página borra únicamente los datos de esa página. El tema (oscuro/claro) se comparte entre las tres páginas.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>por josegonandez</p>
+  </footer>
+
+  <script src="js/app-ayuda.js"></script>
+</body>
+</html>
