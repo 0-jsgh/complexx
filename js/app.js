@@ -48,6 +48,7 @@
       unknowns: getRowValues(unknownsList),
       knowns: getRowValues(knownsList),
       equations: getRowValues(equationsList),
+      context: document.getElementById("context-text").value,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -74,6 +75,15 @@
 
   function getRowValues(container) {
     return [...container.querySelectorAll("input")].map((i) => i.value.trim());
+  }
+
+  /** Asigna .value y dispara "input" para que la capa de resaltado (hl-backdrop)
+   *  se sincronice; asignar .value directamente no dispara ese evento por sí solo,
+   *  y el input real queda con texto transparente (invisible hasta seleccionarlo). */
+  function setValue(input, value) {
+    if (!input) return;
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
   function makeRow({ placeholder, value, onRemove, monoLabel }) {
@@ -123,7 +133,7 @@
   }
 
   function addKnownRow(value) {
-    const { row } = makeRow({
+    const { row, input } = makeRow({
       placeholder: "a=12  ó  3*b=\\ln(3/2)",
       value,
       onRemove: (r) => {
@@ -132,6 +142,7 @@
       },
     });
     knownsList.appendChild(row);
+    if (window.attachHighlight) window.attachHighlight(input);
   }
 
   /** Ajusta el número de filas de ecuación al número de incógnitas actuales, conservando texto ya escrito por índice. */
@@ -140,12 +151,13 @@
     const currentValues = [...equationsList.querySelectorAll("input")].map((i) => i.value);
     equationsList.innerHTML = "";
     for (let i = 0; i < unknownCount; i++) {
-      const { row } = makeRow({
+      const { row, input } = makeRow({
         placeholder: i === 0 ? "3*x1+a*x2=b" : `ecuación ${i + 1}`,
         value: currentValues[i] || "",
         monoLabel: `Ec.${i + 1}`,
       });
       equationsList.appendChild(row);
+      if (window.attachHighlight) window.attachHighlight(input);
     }
   }
 
@@ -162,6 +174,7 @@
   [unknownsList, knownsList, equationsList].forEach((list) => {
     list.addEventListener("input", saveState);
   });
+  document.getElementById("context-text").addEventListener("input", saveState);
 
   // Restaura el estado guardado si existe; si no, precarga el ejemplo.
   const saved = loadState();
@@ -170,16 +183,17 @@
     saved.knowns.forEach((v) => addKnownRow(v));
     const eqInputs = equationsList.querySelectorAll("input");
     saved.equations.forEach((v, i) => {
-      if (eqInputs[i]) eqInputs[i].value = v;
+      setValue(eqInputs[i], v);
     });
+    document.getElementById("context-text").value = saved.context || "";
   } else {
     addUnknownRow("x1");
     addUnknownRow("x2");
     addKnownRow("a=12");
     addKnownRow("3*b=\\ln(3/2)");
     const eqInputs = equationsList.querySelectorAll("input");
-    if (eqInputs[0]) eqInputs[0].value = "3*x1+a*x2=b";
-    if (eqInputs[1]) eqInputs[1].value = "x1-x2=1";
+    setValue(eqInputs[0], "3*x1+a*x2=b");
+    setValue(eqInputs[1], "x1-x2=1");
   }
   saveState();
 
@@ -288,13 +302,19 @@
   // Reporte PDF (vía impresión del navegador, sin librerías externas)
   // ------------------------------------------------------------------
   function buildPrintReport() {
-    const { unknownNames, resolvedKnowns, knownTexts, equationTexts, A, b, x } = lastSolution;
-    const now = new Date().toLocaleString();
+    const { unknownNames, resolvedKnowns, knownTexts, equationTexts, x } = lastSolution;
+    const titleInput = document.getElementById("pdf-title").value.trim();
+    const title = titleInput || "Sistema de ecuaciones";
+    const highlight = window.highlightToHtml || escapeHtml;
 
-    let html = `<h1>Resolvedor de Sistemas de Ecuaciones — Informe</h1>`;
-    html += `<p class="print-meta">Generado el ${now}</p>`;
+    let html = `<h1>${escapeHtml(title)}</h1>`;
 
-    html += `<h2>1 · Variables desconocidas</h2><p class="print-eq">${unknownNames.map(escapeHtml).join(", ")}</p>`;
+    const contextText = document.getElementById("context-text").value.trim();
+    if (contextText) {
+      html += `<h2>Contexto</h2><p class="print-context">${escapeHtml(contextText).replace(/\n/g, "<br>")}</p>`;
+    }
+
+    html += `<h2>1 · Variables desconocidas</h2><p class="print-eq">${unknownNames.map((n) => highlight(n)).join(", ")}</p>`;
 
     html += `<h2>2 · Variables conocidas</h2>`;
     if (knownTexts.length === 0) {
@@ -303,25 +323,17 @@
       html += `<table><tr><th>Definición</th><th>Valor resuelto</th></tr>`;
       knownTexts.forEach((text, i) => {
         const rk = resolvedKnowns[i];
-        html += `<tr><td>${escapeHtml(text)}</td><td>${rk.name} = ${rk.value.toDisplayString()}</td></tr>`;
+        html += `<tr><td>${highlight(text)}</td><td>${rk.name} = ${rk.value.toDisplayString()}</td></tr>`;
       });
       html += `</table>`;
     }
 
     html += `<h2>3 · Sistema de ecuaciones (tal como se ingresó)</h2>`;
     equationTexts.forEach((text, i) => {
-      html += `<p class="print-eq">Ec.${i + 1}: ${escapeHtml(text)}</p>`;
+      html += `<p class="print-eq">Ec.${i + 1}: ${highlight(text)}</p>`;
     });
 
-    html += `<h2>4 · Procedimiento — extracción de coeficientes por sondeo</h2>`;
-    html += `<p class="print-eq">Cada ecuación se evalúa con las incógnitas en 0 (constante) y en 1 una por una (coeficiente), asumiendo que la ecuación es afín en las incógnitas.</p>`;
-    html += `<table><tr><th>Ecuación</th>${unknownNames.map((u) => `<th>coef. de ${u}</th>`).join("")}<th>término independiente</th></tr>`;
-    A.forEach((row, i) => {
-      html += `<tr><td>Ec.${i + 1}</td>${row.map((c) => `<td>${c.toDisplayString()}</td>`).join("")}<td>${b[i].toDisplayString()}</td></tr>`;
-    });
-    html += `</table>`;
-
-    html += `<h2>5 · Solución (eliminación gaussiana compleja)</h2>`;
+    html += `<h2>4 · Solución (eliminación gaussiana compleja)</h2>`;
     html += `<table><tr><th>Variable</th><th>Valor</th></tr>`;
     unknownNames.forEach((name, i) => {
       html += `<tr><td>${name}</td><td class="print-final">${x[i].toDisplayString()}</td></tr>`;
@@ -350,6 +362,7 @@
     unknownsList.innerHTML = "";
     knownsList.innerHTML = "";
     equationsList.innerHTML = "";
+    document.getElementById("context-text").value = "";
     addUnknownRow("");
     clearError();
     resultsSection.style.display = "none";
